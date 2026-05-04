@@ -4,6 +4,7 @@ import numpy as np
 
 poly = random_polygon(12) # generated in counterclockwise order
 edges = []
+removed_edges = []
 
 def orient(a, b, p):
     a = np.array(a)
@@ -21,6 +22,34 @@ def intersect(a, b, x, y):
         return False
     else:
         return orient(a, b, x) != orient(a, b, y) and orient(x, y, a) != orient(x, y, b)
+
+def render():
+    try:
+        while True:
+            removed_edges.remove("placeholder")
+    except ValueError:
+        pass
+    es = []
+    for t in edges: es.append((poly[t[0]], poly[t[1]]))
+
+    rs = []
+    for t in removed_edges: rs.append((poly[t[0]], poly[t[1]]))
+
+    poly_copy = poly.copy()
+    poly_copy.append(poly[0])
+    xs, ys = zip(*(poly_copy))
+
+    plt.gca().set_aspect("equal")
+    plt.plot(xs, ys, "o-")
+    for e in es:
+        exs, eys = zip(*(e))
+        plt.plot(exs, eys, "c-")
+    for r in rs:
+        rxs, rys = zip(*(r))
+        plt.plot(rxs, rys, "c:")
+    plt.plot(xs[0], ys[0], "w.")
+    plt.plot([xs[0], xs[1]], [ys[0], ys[1]], "w:")
+    plt.show()
 
 # ear clipping algorithm
 status = np.zeros(len(poly), dtype=int) # 0 / 1 / 2 / 3 = concave / convex / ear / clipped
@@ -49,23 +78,14 @@ def update_status(index):
 for i in range(len(poly)):
     update_status(i)
 
-for i in range(len(poly) - 3):
-    # find an ear
-    ear_i = 0
-    try:
-        while status[ear_i] != 2:
-            ear_i += 1
-    except IndexError:
-        print("index err. force quit!")
-        print("orientation test:")
-        for i in range(len(poly)):
-            print(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
-        break
-    # get its neighbours
+clipped_count = 0
+
+def clip_ear(ear_i):
     next_i = neighbours[ear_i][0]
     prev_i = neighbours[ear_i][1]
     # clip the ear
     status[ear_i] = 3
+    removed_edges.append(edges.pop())
     edges.append((prev_i, next_i))
     # connect neighbours
     neighbours[prev_i][0] = next_i
@@ -74,26 +94,40 @@ for i in range(len(poly) - 3):
     update_status(next_i)
     update_status(prev_i)
 
-# clean up 100% unneeded edges
-orientations = []
-removed_edges = []
-for i in range(len(poly)):
-    orientations.append(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
-for i in range(len(edges) - 1, -1, -1):
-    if orientations[edges[i][0]] == 1 and orientations[edges[i][1]] == 1:
-        removed_edges.append(edges.pop(i))
+while True:
+    # find an ear
+    ear_i = 0
+    try:
+        while status[ear_i] != 2:
+            ear_i += 1
+    except IndexError:
+        print("no ears left!")
+        break
+    next_i = neighbours[ear_i][0]
+    prev_i = neighbours[ear_i][1]
+    edges.append("placeholder")
+    clip_ear(ear_i)
+    # if neighbours are ears and onside, clip them too
+    iterate = True
+    next_two = [ear_i, next_i]
+    prev_two = [ear_i, prev_i]
+    while iterate:
+        iterate = False
+        if (status[prev_i] == 2
+        and orient(poly[prev_two[-2]], poly[prev_two[-1]], poly[neighbours[prev_i][1]]) == -1 # make sure it's still onside
+        and orient(poly[neighbours[prev_i][1]], poly[next_two[1]], poly[next_two[0]]) == -1): # make sure we can still come back around
+            clip_ear(prev_i)
+            prev_i = neighbours[prev_i][1]
+            prev_two.pop(0)
+            prev_two.append(prev_i)
+            iterate = True
+        if (status[next_i] == 2
+        and orient(poly[next_two[-2]], poly[next_two[-1]], poly[neighbours[next_i][0]]) == 1 # ditto above
+        and orient(poly[neighbours[next_i][0]], poly[prev_two[1]], poly[prev_two[0]]) == 1):
+            clip_ear(next_i)
+            next_i = neighbours[next_i][0]
+            next_two.pop(0)
+            next_two.append(next_i)
+            iterate = True
 
-es = []
-for t in edges: es.append((poly[t[0]], poly[t[1]]))
-
-poly.append(poly[0])
-
-xs, ys = zip(*(poly))
-
-plt.gca().set_aspect("equal")
-plt.plot(xs, ys, "o-")
-for e in es:
-    exs, eys = zip(*(e))
-    plt.plot(exs, eys, "c-")
-plt.plot(xs[0], ys[0], "ro")
-plt.show()
+render()
