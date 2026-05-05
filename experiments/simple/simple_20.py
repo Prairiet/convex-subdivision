@@ -1,4 +1,4 @@
-from polygenerator import random_convex_polygon
+from polygenerator import random_polygon
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -6,7 +6,7 @@ import time
 total_edges = 0
 errors = 0
 for _ in range(100):
-    poly = random_convex_polygon(50) # generated in counterclockwise order
+    poly = random_polygon(20) # generated in counterclockwise order
     edges = []
 
     def orient(a, b, p):
@@ -111,4 +111,4 @@ for _ in range(100):
 
 print("runtime:", time.process_time())
 print("errors:", errors)
-print("average edges:", total_edges / 100)
+print("average edges:", total_edges / (100 - errors))

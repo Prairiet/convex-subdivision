@@ -3,8 +3,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import time
 
-total_edges = 0
 errors = 0
+total_edges = 0
 for _ in range(100):
     poly = random_polygon(20) # generated in counterclockwise order
     edges = []
@@ -30,9 +30,6 @@ for _ in range(100):
         es = []
         for t in edges: es.append((poly[t[0]], poly[t[1]]))
 
-        rs = []
-        for t in removed_edges: rs.append((poly[t[0]], poly[t[1]]))
-
         poly_copy = poly.copy()
         poly_copy.append(poly[0])
         xs, ys = zip(*(poly_copy))
@@ -42,9 +39,6 @@ for _ in range(100):
         for e in es:
             exs, eys = zip(*(e))
             plt.plot(exs, eys, "c-")
-        for r in rs:
-            rxs, rys = zip(*(r))
-            plt.plot(rxs, rys, "c:")
         plt.plot(xs[0], ys[0], "w.")
         plt.plot([xs[0], xs[1]], [ys[0], ys[1]], "w:")
         plt.show()
@@ -61,8 +55,8 @@ for _ in range(100):
         prev_i = neighbours[index][1] # get cw neighbour
         if orient(poly[prev_i], poly[index], poly[next_i]) == 1: # check if it's convex
             status[index] = 1
-            if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) == -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) == 1) 
-            and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) == 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) == -1)):
+            if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) != 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) != -1) 
+            and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) != -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) != 1)):
                 return # if both are offside, diagonal isnt internal
             edge_i = index
             while edge_i != prev_i: # iterate through all edges, except the two connecting our index and its neighbours
@@ -98,17 +92,6 @@ for _ in range(100):
         update_status(next_i)
         update_status(prev_i)
 
-    # clean up 100% unneeded edges
-    orientations = []
-    removed_edges = []
-    for i in range(len(poly)):
-        orientations.append(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
-    for i in range(len(edges) - 1, -1, -1):
-        if orientations[edges[i][0]] == 1 and orientations[edges[i][1]] == 1:
-            removed_edges.append(edges.pop(i))
-    
-    total_edges += len(edges)
-
 print("runtime:", time.process_time())
 print("errors:", errors)
-print("average edges:", total_edges / 100)
+print("average edges:", total_edges / (100 - errors))
