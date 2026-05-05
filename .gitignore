@@ -1,5 +1,5 @@
 # Project files
-flood_results.txt
+results/*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
