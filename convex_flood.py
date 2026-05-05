@@ -1,4 +1,4 @@
-from polygenerator import random_polygon
+from polygenerator import random_polygon, random_convex_polygon
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -18,7 +18,7 @@ def orient(a, b, p):
     else:
         return 0
 def intersect(a, b, x, y):
-    if a == x or a == y or b == x or b == y:
+    if a == x or a == y or b == x or b == y: # consider shared points as non-intersecting
         return False
     else:
         return orient(a, b, x) != orient(a, b, y) and orient(x, y, a) != orient(x, y, b)
@@ -63,8 +63,8 @@ def update_status(index):
     prev_i = neighbours[index][1] # get cw neighbour
     if orient(poly[prev_i], poly[index], poly[next_i]) == 1: # check if it's convex
         status[index] = 1
-        if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) != 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) != -1) 
-        and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) != -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) != 1)):
+        if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) == -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) == 1) 
+        and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) == 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) == -1)):
             return # if both are offside, diagonal isnt internal
         edge_i = index
         while edge_i != prev_i: # iterate through all edges, except the two connecting our index and its neighbours
