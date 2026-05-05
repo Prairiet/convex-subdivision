@@ -129,5 +129,19 @@ while True:
             next_two.pop(0)
             next_two.append(next_i)
             iterate = True
+# remove edges that are on the polygon's edge
+for i in range(len(edges) - 1, -1, -1):
+    index_first = (edges[i][0] + len(poly)) % len(poly)
+    index_second = (edges[i][1] + len(poly)) % len(poly)
+    if index_first == index_second + 1 or index_second == index_first + 1:
+        edges.pop(i)
+# remove duplicate edges
+# sort each edge
+for i in range(len(edges)):
+    if edges[i][0] > edges[i][1]:
+        edges[i] = (edges[i][1], edges[i][0])
+edges = np.unique(edges, axis=0)
 
+print("edges used:", len(edges))
+print(edges)
 render()
