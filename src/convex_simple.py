@@ -2,7 +2,7 @@ from polygenerator import random_polygon
 import matplotlib.pyplot as plt
 import numpy as np
 
-poly = random_polygon(100) # generated in counterclockwise order
+poly = random_polygon(12) # generated in counterclockwise order
 edges = []
 
 def orient(a, b, p):
