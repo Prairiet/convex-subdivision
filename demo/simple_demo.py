@@ -2,8 +2,9 @@ from polygenerator import random_polygon
 import matplotlib.pyplot as plt
 import numpy as np
 
-poly = random_polygon(100) # generated in counterclockwise order
+poly = random_polygon(12) # generated in counterclockwise order
 edges = []
+removed_edges = []
 
 def orient(a, b, p):
     a = np.array(a)
@@ -57,8 +58,8 @@ def update_status(index):
     prev_i = neighbours[index][1] # get cw neighbour
     if orient(poly[prev_i], poly[index], poly[next_i]) == 1: # check if it's convex
         status[index] = 1
-        if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) == -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) == 1) 
-        and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) == 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) == -1)):
+        if ((orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][1]]) != 1 or orient(poly[prev_i], poly[next_i], poly[neighbours[prev_i][0]]) != -1) 
+        and (orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][1]]) != -1 or orient(poly[prev_i], poly[next_i], poly[neighbours[next_i][0]]) != 1)):
             return # if both are offside, diagonal isnt internal
         edge_i = index
         while edge_i != prev_i: # iterate through all edges, except the two connecting our index and its neighbours
@@ -96,15 +97,16 @@ for i in range(len(poly) - 3):
     # update status
     update_status(next_i)
     update_status(prev_i)
+    render()
 
 # clean up 100% unneeded edges
 orientations = []
-removed_edges = []
 for i in range(len(poly)):
     orientations.append(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
 for i in range(len(edges) - 1, -1, -1):
     if orientations[edges[i][0]] == 1 and orientations[edges[i][1]] == 1:
         removed_edges.append(edges.pop(i))
+        render()
 
 print("edges used:", len(edges))
 print(edges)

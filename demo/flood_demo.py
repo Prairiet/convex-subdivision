@@ -1,9 +1,10 @@
-from polygenerator import random_polygon
+from polygenerator import random_polygon, random_convex_polygon
 import matplotlib.pyplot as plt
 import numpy as np
 
-poly = random_polygon(100) # generated in counterclockwise order
+poly = random_polygon(12) # generated in counterclockwise order
 edges = []
+removed_edges = []
 
 def orient(a, b, p):
     a = np.array(a)
@@ -17,12 +18,17 @@ def orient(a, b, p):
     else:
         return 0
 def intersect(a, b, x, y):
-    if a == x or a == y or b == x or b == y:
+    if a == x or a == y or b == x or b == y: # consider shared points as non-intersecting
         return False
     else:
         return orient(a, b, x) != orient(a, b, y) and orient(x, y, a) != orient(x, y, b)
-    
+
 def render():
+    try:
+        while True:
+            removed_edges.remove("placeholder")
+    except ValueError:
+        pass
     es = []
     for t in edges: es.append((poly[t[0]], poly[t[1]]))
 
@@ -72,23 +78,14 @@ def update_status(index):
 for i in range(len(poly)):
     update_status(i)
 
-for i in range(len(poly) - 3):
-    # find an ear
-    ear_i = 0
-    try:
-        while status[ear_i] != 2:
-            ear_i += 1
-    except IndexError:
-        print("index err. force quit!")
-        print("orientation test:")
-        for i in range(len(poly)):
-            print(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
-        break
-    # get its neighbours
+clipped_count = 0
+
+def clip_ear(ear_i):
     next_i = neighbours[ear_i][0]
     prev_i = neighbours[ear_i][1]
     # clip the ear
     status[ear_i] = 3
+    removed_edges.append(edges.pop())
     edges.append((prev_i, next_i))
     # connect neighbours
     neighbours[prev_i][0] = next_i
@@ -96,16 +93,62 @@ for i in range(len(poly) - 3):
     # update status
     update_status(next_i)
     update_status(prev_i)
+    render()
 
-# clean up 100% unneeded edges
-orientations = []
-removed_edges = []
-for i in range(len(poly)):
-    orientations.append(orient(poly[i - 1], poly[i], poly[(i + 1) % len(poly)]))
+while True:
+    # find an ear
+    ear_i = 0
+    try:
+        while status[ear_i] != 2:
+            ear_i += 1
+    except IndexError:
+        print("no ears left!")
+        break
+    next_i = neighbours[ear_i][0]
+    prev_i = neighbours[ear_i][1]
+    edges.append("placeholder")
+    clip_ear(ear_i)
+    # if neighbours are ears and onside, clip them too
+    iterate = True
+    next_two = [ear_i, next_i]
+    prev_two = [ear_i, prev_i]
+    while iterate:
+        iterate = False
+        if (status[prev_i] == 2
+        and orient(poly[prev_two[-2]], poly[prev_two[-1]], poly[neighbours[prev_i][1]]) == -1 # make sure it's still onside
+        and orient(poly[neighbours[prev_i][1]], poly[next_two[1]], poly[next_two[0]]) == -1): # make sure we can still come back around
+            clip_ear(prev_i)
+            prev_i = neighbours[prev_i][1]
+            prev_two.pop(0)
+            prev_two.append(prev_i)
+            iterate = True
+        if (status[next_i] == 2
+        and orient(poly[next_two[-2]], poly[next_two[-1]], poly[neighbours[next_i][0]]) == 1 # ditto above
+        and orient(poly[neighbours[next_i][0]], poly[prev_two[1]], poly[prev_two[0]]) == 1):
+            clip_ear(next_i)
+            next_i = neighbours[next_i][0]
+            next_two.pop(0)
+            next_two.append(next_i)
+            iterate = True
+# remove edges that are on the polygon's edge
 for i in range(len(edges) - 1, -1, -1):
-    if orientations[edges[i][0]] == 1 and orientations[edges[i][1]] == 1:
-        removed_edges.append(edges.pop(i))
+    index_first = (edges[i][0] + len(poly)) % len(poly)
+    index_second = (edges[i][1] + len(poly)) % len(poly)
+    if index_first == index_second + 1 or index_second == index_first + 1:
+        edges.pop(i)
+# remove duplicate edges
+# sort each edge
+for i in range(len(edges)):
+    if edges[i][0] > edges[i][1]:
+        edges[i] = (edges[i][1], edges[i][0])
+edges = np.unique(edges, axis=0)
 
 print("edges used:", len(edges))
 print(edges)
 render()
+
+file = open("results/flood_results.txt", "a")
+file.write(str(poly))
+file.write("\n")
+file.write(str(list(edges)))
+file.write("\n")
