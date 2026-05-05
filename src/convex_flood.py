@@ -146,7 +146,7 @@ print("edges used:", len(edges))
 print(edges)
 render()
 
-file = open("flood_results.txt", "a")
+file = open("results/flood_results.txt", "a")
 file.write(str(poly))
 file.write("\n")
 file.write(str(list(edges)))
