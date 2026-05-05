@@ -111,4 +111,4 @@ for _ in range(100):
 
 print("runtime:", time.process_time())
 print("errors:", errors)
-print("average edges:", total_edges / (100 - errors))
+print("average edges:", total_edges / 100)
