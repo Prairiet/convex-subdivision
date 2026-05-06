@@ -1,5 +1,6 @@
 # Convex Subdivision
-Computer Geometry Project
+Computer Geometry Project @
+https://github.com/Prairiet/convex-subdivision
 
 # Installation
 Simply run this to quickly install all requirements.
